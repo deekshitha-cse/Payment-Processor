@@ -11,7 +11,9 @@ import com.wondrx.paymentprocessor.entity.TransactionType;
 import com.wondrx.paymentprocessor.repository.TransactionRepository;
 import com.wondrx.paymentprocessor.entity.TransactionEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @Service
 public class TransactionService {
 
