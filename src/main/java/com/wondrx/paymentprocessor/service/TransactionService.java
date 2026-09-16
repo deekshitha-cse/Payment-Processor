@@ -13,7 +13,6 @@ import com.wondrx.paymentprocessor.entity.TransactionEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
 @Service
 public class TransactionService {
 
@@ -24,7 +23,7 @@ public class TransactionService {
         this.walletRepository = walletRepository;
         this.transactionRepository = transactionRepository;
     }
-
+    @Transactional
     public ResponseEntity<?> processTransaction(TransactionRequest request) {
         Optional<WalletEntity> wallet = walletRepository.findByUserId(request.getUserId());
         if(wallet.isEmpty()) {
