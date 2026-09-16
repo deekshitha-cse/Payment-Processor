@@ -23,6 +23,16 @@ public class TransactionRequest {
     @NotNull
     private TransactionType type;
 
+    protected TransactionRequest() {
+    }
+
+    public TransactionRequest(UUID transactionId, UUID userId, BigDecimal amount, TransactionType type) {
+        this.transactionId = transactionId;
+        this.userId = userId;
+        this.amount = amount;
+        this.type = type;
+    }
+
     public UUID getTransactionId() {
         return transactionId;
     }
