@@ -23,4 +23,36 @@ public class TransactionEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private TransactionType type;
+
+    protected TransactionEntity() {
+
+    }
+
+    public TransactionEntity(
+        UUID transactionId,
+        UUID userId,
+        BigDecimal amount,
+        TransactionType type
+    ) {
+        this.transactionId = transactionId;
+        this.userId = userId;
+        this.amount = amount;
+        this.type = type;
+    }
+
+    public UUID getTransactionId() {
+        return transactionId;
+    }
+
+    public UUID getUserId() {
+        return userId;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
+    }
+
+    public TransactionType getType() {
+        return type;
+    }
 }

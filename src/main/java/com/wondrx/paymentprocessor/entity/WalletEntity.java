@@ -42,4 +42,8 @@ public class WalletEntity {
         return balance;
     }
 
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance;
+    }
+
 }
