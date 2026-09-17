@@ -42,7 +42,63 @@ class PaymentprocessorApplicationTests {
 	}
 
 	@Test
-	@DisplayName("Sends 10 concurrent debit requests ...")
+	@DisplayName("Processes a single valid debit transaction successfully.")
+	void happyPathTest() {
+		UUID userId = UUID.randomUUID();
+		BigDecimal amount = new BigDecimal("500.00");
+		WalletEntity wallet = new WalletEntity(userId, amount);
+		walletRepository.save(wallet);
+		TransactionRequest transaction = new TransactionRequest(UUID.randomUUID(), userId, new BigDecimal("100"), TransactionType.DEBIT);
+		ResponseEntity<?> response = transactionService.processTransaction(transaction);
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		WalletEntity updatedWallet = walletRepository.findWalletForRead(userId).orElseThrow();
+		assertEquals(new BigDecimal("400.00"), updatedWallet.getBalance());
+	}
+
+	@Test
+	@DisplayName("Sends 3 identical transactionIDs simultaneously.")
+	void idempotencyTest() {
+		UUID userId = UUID.randomUUID();
+		BigDecimal amount = new BigDecimal("500.00");
+		WalletEntity wallet = new WalletEntity(userId, amount);
+		walletRepository.save(wallet);
+		TransactionRequest transaction = new TransactionRequest(UUID.randomUUID(), userId, new BigDecimal("100"), TransactionType.DEBIT);
+		ExecutorService executor = Executors.newFixedThreadPool(3);
+		List<Future<?>> futures = new ArrayList<>();
+		for(int i = 0; i < 3; i++) {
+			Future<?> future = executor.submit(() -> {
+				transactionService.processTransaction(transaction);
+			});
+
+			futures.add(future);
+		}
+
+		int failed = 0;
+		for(Future<?> future: futures) {
+			try {
+				future.get();
+			} catch (ExecutionException e) {
+				Throwable cause = e.getCause();
+				assertTrue(cause instanceof ResponseStatusException);
+				ResponseStatusException exception = (ResponseStatusException) cause;
+				assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
+				failed++;
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				throw new RuntimeException(e);
+			}
+			
+
+		}
+		executor.shutdown();
+		assertEquals(2, failed);
+
+		WalletEntity updatedWallet = walletRepository.findWalletForRead(userId).orElseThrow();
+		assertEquals(new BigDecimal("400.00"), updatedWallet.getBalance());
+	}
+
+	@Test
+	@DisplayName("Sends 10 concurrent debit requests.")
 	void concurrentDebitTest() {
 		
 		UUID userId = UUID.randomUUID();
@@ -86,19 +142,5 @@ class PaymentprocessorApplicationTests {
 
 		WalletEntity updatedWallet = walletRepository.findWalletForRead(userId).orElseThrow();
 		assertEquals(new BigDecimal("0.00"), updatedWallet.getBalance());
-	}
-
-	@Test
-	@DisplayName("Processes a single valid debit transaction successfully.")
-	void happyPathTest() {
-		UUID userId = UUID.randomUUID();
-		BigDecimal amount = new BigDecimal("500.00");
-		WalletEntity wallet = new WalletEntity(userId, amount);
-		walletRepository.save(wallet);
-		TransactionRequest transaction = new TransactionRequest(UUID.randomUUID(), userId, new BigDecimal("100"), TransactionType.DEBIT);
-		ResponseEntity<?> response = transactionService.processTransaction(transaction);
-		assertEquals(HttpStatus.OK, response.getStatusCode());
-		WalletEntity updatedWallet = walletRepository.findWalletForRead(userId).orElseThrow();
-		assertEquals(new BigDecimal("400.00"), updatedWallet.getBalance());
 	}
 }
