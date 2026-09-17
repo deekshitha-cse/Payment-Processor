@@ -25,15 +25,15 @@ public class TransactionService {
     }
     @Transactional
     public ResponseEntity<?> processTransaction(TransactionRequest request) {
-        if(transactionRepository.existsById(request.transactionId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Transaction already processed")
+        if(transactionRepository.existsById(request.getTransactionId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Transaction already processed");
         }
         Optional<WalletEntity> wallet = walletRepository.findByUserId(request.getUserId());
         if(wallet.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Wallet not found");
         }
-        if(transactionRepository.existsById(request.transactionId())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Transaction already processed")
+        if(transactionRepository.existsById(request.getTransactionId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Transaction already processed");
         }
         if(request.getType() == TransactionType.DEBIT) {
             if(request.getAmount().compareTo(wallet.get().getBalance()) > 0) {

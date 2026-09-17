@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.springframework.http.ResponseEntity;
 
 @SpringBootTest
 @TestConstructor(autowireMode = TestConstructor.AutowireMode.ALL)
@@ -87,4 +88,17 @@ class PaymentprocessorApplicationTests {
 		assertEquals(new BigDecimal("0.00"), updatedWallet.getBalance());
 	}
 
+	@Test
+	@DisplayName("Processes a single valid debit transaction successfully.")
+	void happyPathTest() {
+		UUID userId = UUID.randomUUID();
+		BigDecimal amount = new BigDecimal("500.00");
+		WalletEntity wallet = new WalletEntity(userId, amount);
+		walletRepository.save(wallet);
+		TransactionRequest transaction = new TransactionRequest(UUID.randomUUID(), userId, new BigDecimal("100"), TransactionType.DEBIT);
+		ResponseEntity<?> response = transactionService.processTransaction(transaction);
+		assertEquals(HttpStatus.OK, response.getStatusCode());
+		WalletEntity updatedWallet = walletRepository.findWalletForRead(userId).orElseThrow();
+		assertEquals(new BigDecimal("400.00"), updatedWallet.getBalance());
+	}
 }
